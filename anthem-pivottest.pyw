@@ -1,12 +1,13 @@
 # Python 3.7.2
-from datetime import datetime
-from sys import exit
+import datetime
+from pprint import pprint
 
 from gooey import Gooey, GooeyParser
-from pandas import read_excel, read_csv, DataFrame, errors
+from pandas import read_excel, read_csv, DataFrame, errors, pivot_table
 
-now = datetime.now()
+now = datetime.datetime.now()
 
+# TODO: implement try/except blocks for file handling
 # TODO: Retrieve Job Number
 # TODO: Comment code.
 
@@ -21,8 +22,13 @@ class AnthemMerge:
             self._dfList = read_csv(maillist, dtype=str)
         except errors.ParserError:
             print("Unable to process Mailing List")
+        self.dfMerged = DataFrame()
+        self.dfProofs = DataFrame()
+        self.dfFinal = DataFrame()
 
-        # Cleanup Branding Grid
+    def create_contract(self):
+        """ Prepare data frames so both have a Contract Number column for indexing
+        """
         self._dfGrid.insert(column="Contract Number",
                             loc=2,
                             value=self._dfGrid['Contract 1'] +
@@ -30,15 +36,6 @@ class AnthemMerge:
         self._dfGrid.drop(['Contract 1', 'Contract 2'],
                           axis=1,
                           inplace=True)
-        self.dfDupes = self._dfGrid[self._dfGrid.duplicated(['Contract Number'])]
-        if not self.dfDupes.empty:
-            exit('BRANDING GRID HAS DUPLICATES! DO NOT USE')
-
-        self.dfMerged = DataFrame()
-        self.dfProofs = DataFrame()
-        self.dfFinal = DataFrame()
-
-    def create_contract(self):
         self._dfList.rename(columns={'List Contract Number': 'Contract Number'},
                             inplace=True)
 
@@ -46,22 +43,11 @@ class AnthemMerge:
         self.dfMerged = self._dfList.join(self._dfGrid.set_index('Contract Number'),
                                           on='Contract Number')
 
-    def get_proofs(self):
-        """ Generate a new data frame consisting of the first 2 records
-            of each unique contract number
-        """
-        contracts = self.dfMerged['Contract Number'].unique()
-        for x in range(len(contracts)):
-            self.dfProofs = self.dfProofs.append(self.dfMerged.loc[self.dfMerged['Contract Number'] ==
-                                                                   contracts[x]].head(2))
-        self.dfProofs['Proofs'] = 'Proof'
-        self.dfFinal = self.dfProofs.append(self.dfMerged, ignore_index=True, sort=False)
+        dfpivot = pivot_table(self.dfMerged, index=['Contract Number'], columns=['Envelope'], aggfunc=len)
+        dfpivot.reset_index(inplace=True)
 
-    def create_csv(self):
-        """ Output to csv file with ISO-8859-1 encoding for compatibility with Variable Data Software
-        """
-        name = f'Anthem Merged_{now:%m%d%y}'
-        self.dfFinal.to_csv(name + '.csv', index=False, encoding='ISO-8859-1')
+        pprint(dfpivot, width=80)
+
 
 
 @Gooey(program_name='Anthem Merge Program')
@@ -77,8 +63,7 @@ def main():
     anthemjob = AnthemMerge(args.Branding_Grid, args.Mailing_List)
     anthemjob.create_contract()
     anthemjob.merge()
-    anthemjob.get_proofs()
-    anthemjob.create_csv()
+
     del anthemjob
 
 
