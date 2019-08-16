@@ -1,5 +1,6 @@
 # Python 3.7.2
 from datetime import datetime
+from os import path
 from sys import exit
 
 from gooey import Gooey, GooeyParser
@@ -32,15 +33,15 @@ class AnthemMerge:
                           inplace=True)
         self.dfDupes = self._dfGrid[self._dfGrid.duplicated(['Contract Number'])]
         if not self.dfDupes.empty:
+            self.dfDupes.to_csv(path.basename(brandgrid)[:-5] + " duplicates.csv")
             exit('BRANDING GRID HAS DUPLICATES! DO NOT USE')
+
+        self._dfList.rename(columns={'List Contract Number': 'Contract Number'},
+                            inplace=True)
 
         self.dfMerged = DataFrame()
         self.dfProofs = DataFrame()
         self.dfFinal = DataFrame()
-
-    def create_contract(self):
-        self._dfList.rename(columns={'List Contract Number': 'Contract Number'},
-                            inplace=True)
 
     def merge(self):
         self.dfMerged = self._dfList.join(self._dfGrid.set_index('Contract Number'),
@@ -58,7 +59,7 @@ class AnthemMerge:
         self.dfFinal = self.dfProofs.append(self.dfMerged, ignore_index=True, sort=False)
 
     def create_csv(self):
-        """ Output to csv file with ISO-8859-1 encoding for compatibility with Variable Data Software
+        """ Output to csv file with Latin(ISO-8859-1) encoding for compatibility with Variable Data Software
         """
         name = f'Anthem Merged_{now:%m%d%y}'
         self.dfFinal.to_csv(name + '.csv', index=False, encoding='ISO-8859-1')
@@ -75,7 +76,6 @@ def main():
                         widget="FileChooser")
     args = parser.parse_args()
     anthemjob = AnthemMerge(args.Branding_Grid, args.Mailing_List)
-    anthemjob.create_contract()
     anthemjob.merge()
     anthemjob.get_proofs()
     anthemjob.create_csv()
