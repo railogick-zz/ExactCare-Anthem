@@ -1,19 +1,18 @@
 # Python 3.7.2
 import datetime
-from pprint import pprint
 
 from gooey import Gooey, GooeyParser
-from pandas import read_excel, read_csv, DataFrame, errors, pivot_table
+from pandas import read_excel, read_csv, errors
 
 now = datetime.datetime.now()
 
-# TODO: implement try/except blocks for file handling
 # TODO: Retrieve Job Number
 # TODO: Comment code.
 
 
 class AnthemMerge:
     def __init__(self, brandgrid, maillist):
+        # Import branding grid and mailing list.
         try:
             self._dfGrid = read_excel(brandgrid, dtype=str)
         except errors.ParserError:
@@ -22,32 +21,39 @@ class AnthemMerge:
             self._dfList = read_csv(maillist, dtype=str)
         except errors.ParserError:
             print("Unable to process Mailing List")
-        self.dfMerged = DataFrame()
-        self.dfProofs = DataFrame()
-        self.dfFinal = DataFrame()
 
     def create_contract(self):
-        """ Prepare data frames so both have a Contract Number column for indexing
+        """ Prepare data frames so both have a Contract Number column
+            for join on common index.
         """
-        self._dfGrid.insert(column="Contract Number",
-                            loc=2,
+        # Prepare Branding Grid for merge. Reduce to Contract Number and Envelope columns
+        self._dfGrid.columns = self._dfGrid.columns.str.title()
+        self._dfGrid.columns = self._dfGrid.columns.str.strip()
+        self._dfGrid.insert(column='Contract Number',
                             value=self._dfGrid['Contract 1'] +
                             '-' + self._dfGrid['Contract 2'])
-        self._dfGrid.drop(['Contract 1', 'Contract 2'],
-                          axis=1,
-                          inplace=True)
+        self._dfGrid = self._dfGrid[['Contract Number', 'Envelope']]
+
+        # Prepare mailing list for merge. Name Contract Number column.
+        self._dfList.columns = self._dfList.columns.str.title()
         self._dfList.rename(columns={'List Contract Number': 'Contract Number'},
                             inplace=True)
 
     def merge(self):
-        self.dfMerged = self._dfList.join(self._dfGrid.set_index('Contract Number'),
+        dfMerged = self._dfList.join(self._dfGrid.set_index('Contract Number'),
                                           on='Contract Number')
+        # Output new .csv files based on Envelope type.
+        dfs = dict(tuple(dfMerged.groupby(['Envelope'])))
+        listdf = [dfs[x] for x in dfs]
+        for idx, frame in enumerate(listdf):
+            listdf[idx].to_csv(listdf[idx].iloc[0]['Envelope'] + f' Envelope List_{now:%m%d%y}.csv',
+                               index=False,
+                               header=True)
 
-        dfpivot = pivot_table(self.dfMerged, index=['Contract Number'], columns=['Envelope'], aggfunc=len)
-        dfpivot.reset_index(inplace=True)
-
-        pprint(dfpivot, width=80)
-
+        # Output breakdown of merged list based on Envelope type and Contract Number
+        # Fill na values with #N/A to indicate missing values from join.
+        dfgroup = dfMerged.fillna('#N/A').groupby(['Envelope', 'Contract Number'])
+        dfgroup['Envelope'].agg(len).to_csv(f'Merge Summary_{now:%m%d%y}.csv', header=True)
 
 
 @Gooey(program_name='Anthem Merge Program')

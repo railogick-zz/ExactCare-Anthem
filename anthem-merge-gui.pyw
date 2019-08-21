@@ -24,6 +24,10 @@ class AnthemMerge:
             print("Unable to process Mailing List")
 
         # Cleanup Branding Grid
+        self._dfGrid.columns = self._dfGrid.columns.str.title()
+        self._dfGrid.columns = self._dfGrid.columns.str.strip()
+        print(self._dfGrid.columns.values)
+
         self._dfGrid.insert(column="Contract Number",
                             loc=2,
                             value=self._dfGrid['Contract 1'] +
@@ -36,6 +40,7 @@ class AnthemMerge:
             self.dfDupes.to_csv(path.basename(brandgrid)[:-5] + " duplicates.csv")
             exit('BRANDING GRID HAS DUPLICATES! DO NOT USE')
 
+        self._dfList.columns = self._dfList.columns.str.title()
         self._dfList.rename(columns={'List Contract Number': 'Contract Number'},
                             inplace=True)
 
