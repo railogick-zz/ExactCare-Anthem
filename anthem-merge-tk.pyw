@@ -5,12 +5,12 @@ from tkinter import *
 from tkinter.filedialog import askopenfilename
 from tkinter.ttk import *
 
-from Anthem_Merge_GUI import AnthemMerge
+from amg import AnthemMerge
 
 now = datetime.datetime.now()
 
 # TODO: Change import based on file type.
-# TODO: Cleanup the interface (switch to tkinter?)
+# TODO: Cleanup the interface
 # TODO: Retrieve Job Number
 # TODO: Comment code.
 
@@ -69,7 +69,6 @@ class Window(Frame):
 
     def process(self):
         anthemjob = AnthemMerge(self.brandgrid, self.maillist)
-        anthemjob.create_contract()
         anthemjob.merge()
         anthemjob.get_proofs()
         anthemjob.create_csv()
