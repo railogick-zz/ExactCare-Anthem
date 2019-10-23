@@ -80,7 +80,8 @@ def list_summary(merge_frame):
     envelope_list = ['#N/A', 'Amerigroup', 'Anthem']
     dfs = []
     for idx, frame in enumerate(envelope_list):
-        dfs.append(df_group[df_group['Envelope'] == frame][['Envelope', 'Contract Number', 'Count']].reset_index(drop=True))
+        dfs.append(df_group[df_group['Envelope'] == frame]
+                   [['Envelope', 'Contract Number', 'Count']].reset_index(drop=True))
 
     with Workbook(f'Anthem Merge Summary_{now:%m%d%y}.xlsx') as wb:
         ws = wb.add_worksheet()
