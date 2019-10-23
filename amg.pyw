@@ -76,7 +76,7 @@ class AnthemMerge:
 
     def list_check(self, row):
         """
-        Check for 4 tier List Contract Number in _dfGrid.
+        Check for 4 tier List Contract Number in grid_df.
         If not found, check for 3 tier, otherwise return 2 tier List Contract Number.
         :param row:
         :return str:
@@ -103,7 +103,7 @@ class AnthemMerge:
     # --- Create joined DataFrames ---
     def merge(self):
         print('Merging files...')
-        self._dfList.drop(['Envelope'], inplace=True)  # Drop Envelope Column from presorted list before merge.
+        self._dfList.drop(['Envelope'], axis=1, inplace=True)  # Drop Envelope Column from presorted list before merge.
         self._dfGrid['Contract Number'] = self._dfGrid.apply(self.grid_check, axis=1)
         self._dfMerged = self._dfList.join(self._dfGrid.drop_duplicates(['Contract Number'])
                                            .set_index('Contract Number'),
@@ -113,7 +113,7 @@ class AnthemMerge:
 
     def get_proofs(self):
         """
-        Generate a new data frame consisting of the first 2 records
+        Generate a new data working_df consisting of the first 2 records
         of each unique contract number
         """
 
@@ -128,14 +128,14 @@ class AnthemMerge:
 
     # --- Output Methods ---
     def mail_list_env(self):
-        # Create frame for Envelope Merge
+        # Create working_df for Envelope Merge
         self._dfMailGrid = self._dfGrid[['Contract Number', 'Envelope']]
 
         # Cleanup Mailing List
         self._dfList.columns = self._dfList.columns.str.title()
         print('Verifying Contract Numbers...')
         self._dfList['Contract Number'] = self._dfList.apply(self.list_check, axis=1)
-        self._dfMailGrid['Contract Number'] = self._dfMailGrid.apply(self.grid_check, axis=1)
+        # self._dfMailGrid['Contract Number'] = self._dfMailGrid.apply(self.grid_check, axis=1)
         self._dfMailMerge = self._dfList.join(self._dfMailGrid.drop_duplicates(['Contract Number'])
                                               .set_index('Contract Number'),
                                               on='Contract Number')
