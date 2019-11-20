@@ -74,7 +74,7 @@ def output_envelope_csv(merge_frame):
 
 
 def list_summary(merge_frame):
-    cname = {'ZIP': 'Count'}
+    cname = {'City': 'Count'}
     df_group = merge_frame.rename(columns=cname).fillna('#N/A').groupby(['Envelope', 'Contract Number'],
                                                                         as_index=False).count()
     envelope_list = ['#N/A', 'Amerigroup', 'Anthem']
@@ -124,7 +124,7 @@ def main():
                         choices=['Data', 'Merge'],
                         default='Data',
                         widget='Dropdown',
-                        help='Select purpose of merge: \nData for data breakdown \nMerge for final merge')
+                        help='Select purpose of merge:')
 
     args = parser.parse_args()
     grid_df = initialize_branding_grid(args.Branding_Grid)
@@ -133,7 +133,7 @@ def main():
     if 'Data' in args.Purpose:
         env_df = grid_df['Envelope']
         merged_df = mail_df.join(env_df, on='Contract Number')
-        # output_envelope_csv(merged_df)
+        output_envelope_csv(merged_df)
         list_summary(merged_df)
 
     if 'Merge' in args.Purpose:

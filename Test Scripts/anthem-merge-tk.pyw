@@ -5,7 +5,7 @@ from tkinter import *
 from tkinter.filedialog import askopenfilename
 from tkinter.ttk import *
 
-from amg import AnthemMerge
+from amgOld import AnthemMerge
 
 now = datetime.datetime.now()
 
